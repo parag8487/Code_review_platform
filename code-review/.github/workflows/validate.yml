@@ -30,6 +30,11 @@ jobs:
         cd code-review
         npm run validate
 
+    - name: Run socket connection test
+      run: |
+        cd code-review
+        npm run test-socket
+
     - name: Run TypeScript compilation
       run: |
         cd code-review

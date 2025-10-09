@@ -13,7 +13,8 @@
     "validate": "node scripts/validate-routes.js",
     "precommit": "node scripts/pre-commit.js",
     "test-validation": "node scripts/test-validation.js",
-    "health-check": "node scripts/health-check.js"
+    "health-check": "node scripts/health-check.js",
+    "test-socket": "node scripts/test-socket-connection.js"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
