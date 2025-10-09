@@ -140,8 +140,8 @@ GMAIL_APP_PASSWORD=your_app_password
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd code-review-platform
+   git clone https://github.com/parag8487/Code_review_platform.git
+   cd Code_review_platform
    ```
 
 2. **Install dependencies**
@@ -257,4 +257,4 @@ Visit `/api/test-ai` to test if the Google AI integration is working.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache License 2.0.
