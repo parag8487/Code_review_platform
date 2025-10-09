@@ -18,8 +18,8 @@ An AI-powered code review application with the following features:
 - **PostgreSQL Integration**: Robust database backend for persistent data storage
 - **Contact Form**: Email functionality for user inquiries
 
-### Live Classroom (`live-classroom/`)
-A real-time collaborative coding classroom with the following features:
+### Live Classroom
+A real-time collaborative coding classroom integrated into the code-review application with the following features:
 - **Real-time Code Sharing**: Instant code synchronization across all participants
 - **Multi-user Collaboration**: Socket.IO powered real-time editing capabilities
 - **Classroom Management**: Create and manage coding sessions with user permissions
@@ -97,35 +97,17 @@ For the contact form to work, you need to set up Gmail SMTP:
    GMAIL_APP_PASSWORD=your-app-password
    ```
 
-#### Live Classroom Environment Variables
-
-The Live Classroom application does not require any environment variables for basic functionality.
-
 ### Running Applications Locally
 
-#### Option 1: Using the provided scripts
 ```bash
-# Windows
-start-both.bat
-
-# macOS/Linux
-./start-both.sh
-```
-
-#### Option 2: Manual start
-```bash
-# Terminal 1 - Start Code Review Platform
+# Start the integrated application
 cd code-review
 npm run dev
-
-# Terminal 2 - Start Live Classroom
-cd live-classroom
-npm run dev
 ```
 
-The applications will be available at:
+The application will be available at:
 - Code Review Platform: http://localhost:9002
-- Live Classroom: http://localhost:5000
+- Live Classroom: http://localhost:9002/classroom
 
 ## 📡 API Endpoints
 
@@ -142,7 +124,7 @@ The applications will be available at:
 
 ```
 code-review-platform/
-├── code-review/              # Code Review Platform application
+├── code-review/              # Integrated application with Code Review and Live Classroom
 │   ├── src/                  # Source code
 │   │   ├── app/              # Next.js app router
 │   │   ├── components/       # React components
@@ -151,47 +133,18 @@ code-review-platform/
 │   ├── public/               # Static assets
 │   ├── package.json          # Dependencies and scripts
 │   └── ...
-├── live-classroom/           # Live Classroom application
-│   ├── src/                  # Source code
-│   │   ├── app/              # Next.js app router
-│   │   ├── components/       # React components
-│   │   ├── pages/            # API routes (Socket.IO)
-│   │   └── ...
-│   ├── public/               # Static assets
-│   ├── package.json          # Dependencies and scripts
-│   └── ...
 ├── package.json              # Root package with workspaces
-├── start-both.bat           # Windows script to start both apps
-├── start-both.sh            # macOS/Linux script to start both apps
 └── ...
 ```
 
 ## 🧪 Development
 
-### Code Review Platform
 ```bash
 cd code-review
 npm run dev     # Start development server
 npm run build   # Build for production
 npm run start   # Start production server
 npm run lint    # Run ESLint
-```
-
-### Live Classroom
-```bash
-cd live-classroom
-npm run dev     # Start development server
-npm run build   # Build for production
-npm run start   # Start production server
-npm run lint    # Run ESLint
-```
-
-### Both Applications
-```bash
-npm run dev     # Start both applications using concurrently
-npm run build   # Build both applications
-npm run start   # Start both applications in production mode
-npm run lint    # Run ESLint on both applications
 ```
 
 ## 🤝 Contributing
