@@ -118,23 +118,52 @@ The application implements a secure session-based authentication system:
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the `code-review` directory with the following variables:
 
-```
+```env
+# AI API Key for code analysis (get from Google Cloud Console)
 GEMINI_API_KEY=your_google_ai_api_key
-DB_USER=your_database_user
+
+# Database configuration
+DB_USER=your_database_username
 DB_PASSWORD=your_database_password
 DB_HOST=your_database_host
-DB_PORT=your_database_port
+DB_PORT=5432
 DB_NAME=your_database_name
-SESSION_SECRET=your_session_secret_key
+
+# Session secret (generate using: node generate-secret.js)
+SESSION_SECRET=your_random_session_secret_key_at_least_32_characters
+
+# Email configuration for contact form (Gmail SMTP)
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-app-password
+
+# Environment mode
+NODE_ENV=development
 ```
 
-For local development, you can also set:
+To generate a session secret, run:
+```bash
+cd code-review
+node generate-secret.js
 ```
-GMAIL_USER=your_gmail_address
-GMAIL_APP_PASSWORD=your_app_password
-```
+
+##### Email Configuration
+
+For the contact form to work, you need to set up Gmail SMTP:
+
+1. Create a Gmail App Password:
+   - Sign in to your Gmail account
+   - Go to Google Account settings
+   - Navigate to Security → 2-Step Verification → App passwords
+   - Generate a new app password for "Mail"
+   - Use this password as your `GMAIL_APP_PASSWORD`
+
+2. Set the environment variables in your `.env` file:
+   ```env
+   GMAIL_USER=your-email@gmail.com
+   GMAIL_APP_PASSWORD=your-app-password
+   ```
 
 ## Setup Instructions
 
@@ -184,7 +213,7 @@ This application can be deployed to Vercel with an AlwaysData PostgreSQL databas
 
 Before deploying, you need to set the following environment variables in your Vercel project:
 
-```
+```env
 GEMINI_API_KEY=your_google_ai_api_key
 DB_USER=your_alwaysdata_username
 DB_PASSWORD=your_alwaysdata_password
@@ -251,10 +280,11 @@ Visit `/api/test-ai` to test if the Google AI integration is working.
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a pull request
 
 ## License
 
-This project is licensed under the Apache License 2.0.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE) file for details.
