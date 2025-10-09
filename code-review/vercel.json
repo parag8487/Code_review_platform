@@ -19,6 +19,10 @@
       "dest": "/api/socket"
     },
     {
+      "src": "/classroom/(.*)",
+      "dest": "/classroom"
+    },
+    {
       "src": "/(.*)",
       "dest": "/"
     }

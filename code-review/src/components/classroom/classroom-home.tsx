@@ -19,34 +19,52 @@ export interface Classroom {
   pass: string;
 }
 
-let socket: Socket;
+let socket: Socket | null = null;
 
 export function ClassroomHome() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
   const [joiningClassroom, setJoiningClassroom] = useState<Classroom | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [connectionError, setConnectionError] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const socketInitializer = async () => {
-      // Initialize the socket.io server
-      await fetch("/api/socket_io");
-      
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-      socket = io(siteUrl, {
-        path: "/api/socket_io",
-        addTrailingSlash: false,
-      });
+      try {
+        // Initialize the socket.io server
+        const response = await fetch("/api/socket_io");
+        if (!response.ok) {
+          throw new Error(`Failed to initialize socket server: ${response.status}`);
+        }
+        
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        socket = io(siteUrl, {
+          path: "/api/socket_io",
+          addTrailingSlash: false,
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+        });
 
-      socket.on("connect", () => {
-        console.log("Connected to socket.io server");
-        socket.emit("get-classrooms");
-      });
-      
-      socket.on("classrooms-update", (updatedClassrooms: Classroom[]) => {
-        setClassrooms(updatedClassrooms);
-      });
+        socket.on("connect", () => {
+          console.log("Connected to socket.io server");
+          setConnectionError(false);
+          socket!.emit("get-classrooms");
+        });
+        
+        socket.on("connect_error", (error) => {
+          console.error("Socket connection error:", error);
+          setConnectionError(true);
+        });
+        
+        socket.on("classrooms-update", (updatedClassrooms: Classroom[]) => {
+          setClassrooms(updatedClassrooms);
+        });
+      } catch (error) {
+        console.error("Failed to initialize socket connection:", error);
+        setConnectionError(true);
+      }
     };
     
     socketInitializer();
@@ -54,6 +72,7 @@ export function ClassroomHome() {
     return () => {
       if(socket) {
         socket.disconnect();
+        socket = null;
       }
     }
   }, []);
@@ -80,7 +99,6 @@ export function ClassroomHome() {
     room.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-
   return (
     <div className="min-h-screen bg-background font-body">
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
@@ -97,6 +115,24 @@ export function ClassroomHome() {
       </header>
 
       <main className="container mx-auto px-4 py-8 md:px-6 md:py-12">
+        {connectionError && (
+          <div className="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg">
+            <h3 className="font-bold text-destructive">Connection Error</h3>
+            <p className="text-destructive/80">
+              Unable to connect to the classroom server. Please try refreshing the page.
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={handleRefresh}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Connection
+            </Button>
+          </div>
+        )}
+
         <section className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
               Collaborative Coding, Simplified.
@@ -123,7 +159,6 @@ export function ClassroomHome() {
             Refresh
           </Button>
         </div>
-
 
         {filteredClassrooms.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

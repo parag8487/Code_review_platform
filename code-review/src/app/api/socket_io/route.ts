@@ -5,165 +5,178 @@ import type { User } from "@/types/classroom";
 
 export const dynamic = "force-dynamic";
 
-let io: ServerIO | null = null;
-let classrooms: Classroom[] = [];
-const classroomUsers = new Map<string, User[]>();
-const ownerSockets = new Map<string, string>(); // Map classroomId to owner's socket.id
+// Global variables to maintain state across requests
+declare global {
+  var io: ServerIO | undefined;
+  var classrooms: Classroom[] | undefined;
+  var classroomUsers: Map<string, User[]> | undefined;
+  var ownerSockets: Map<string, string> | undefined;
+}
+
+// Initialize global variables if they don't exist
+global.io = global.io || undefined;
+global.classrooms = global.classrooms || [];
+global.classroomUsers = global.classroomUsers || new Map<string, User[]>();
+global.ownerSockets = global.ownerSockets || new Map<string, string>();
 
 export async function GET(req: NextRequest) {
-  if (!io) {
-    // Create a new HTTP server for Socket.IO
-    const http = require("http");
-    const server = http.createServer();
+  // If io is already initialized, just return success
+  if (global.io) {
+    console.log("Socket.io already running!");
+    return new Response(null, { status: 200 });
+  }
+
+  // Create a new HTTP server for Socket.IO
+  const http = require("http");
+  const server = http.createServer();
+  
+  global.io = new ServerIO(server, {
+    path: "/api/socket_io",
+    addTrailingSlash: false,
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+
+  global.io.on("connection", (socket: any) => {
+    console.log("A user connected:", socket.id);
+
+    socket.on("get-classrooms", () => {
+      socket.emit("classrooms-update", global.classrooms);
+    });
+
+    socket.on("create-classroom", (classroom: Classroom) => {
+      global.classrooms!.push(classroom);
+      global.classroomUsers!.set(classroom.id, []);
+      global.io!.emit("classrooms-update", global.classrooms);
+    });
     
-    io = new ServerIO(server, {
-      path: "/api/socket_io",
-      addTrailingSlash: false,
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+    socket.on("delete-classroom", (classroomId: string) => {
+      global.classrooms = global.classrooms!.filter(c => c.id !== classroomId);
+      global.classroomUsers!.delete(classroomId);
+      global.ownerSockets!.delete(classroomId);
+      global.io!.emit("classrooms-update", global.classrooms);
+      socket.to(classroomId).emit("classroom-deleted-notification");
+    });
+
+    socket.on("get-classroom", (classroomId: string) => {
+      const classroom = global.classrooms!.find(c => c.id === classroomId);
+      socket.emit("classroom-data", classroom);
+      if(classroom) {
+          const users = global.classroomUsers!.get(classroomId) || [];
+          global.io!.to(classroomId).emit("users-update", users);
       }
     });
 
-    io.on("connection", (socket: any) => {
-      console.log("A user connected:", socket.id);
-
-      socket.on("get-classrooms", () => {
-        socket.emit("classrooms-update", classrooms);
-      });
-
-      socket.on("create-classroom", (classroom: Classroom) => {
-        classrooms.push(classroom);
-        classroomUsers.set(classroom.id, []);
-        io!.emit("classrooms-update", classrooms);
-      });
+    socket.on("join-room", (roomId: string, userName: string, isOwner: boolean) => {
+      socket.join(roomId);
+      console.log(`Socket ${socket.id} (${userName}) joined room ${roomId}`);
       
-      socket.on("delete-classroom", (classroomId: string) => {
-        classrooms = classrooms.filter(c => c.id !== classroomId);
-        classroomUsers.delete(classroomId);
-        ownerSockets.delete(classroomId);
-        io!.emit("classrooms-update", classrooms);
-        socket.to(classroomId).emit("classroom-deleted-notification");
-      });
+      if (isOwner) {
+        global.ownerSockets!.set(roomId, socket.id);
+      }
 
-      socket.on("get-classroom", (classroomId: string) => {
-        const classroom = classrooms.find(c => c.id === classroomId);
-        socket.emit("classroom-data", classroom);
-        if(classroom) {
-            const users = classroomUsers.get(classroomId) || [];
-            io!.to(classroomId).emit("users-update", users);
-        }
-      });
+      const classroom = global.classrooms!.find(c => c.id === roomId);
+      if (classroom) {
+          const users = global.classroomUsers!.get(roomId) || [];
+          const userExists = users.some(u => u.name === userName);
 
-      socket.on("join-room", (roomId: string, userName: string, isOwner: boolean) => {
-        socket.join(roomId);
-        console.log(`Socket ${socket.id} (${userName}) joined room ${roomId}`);
-        
-        if (isOwner) {
-          ownerSockets.set(roomId, socket.id);
-        }
+          if (!userExists) {
+              const newUser: User = { id: socket.id, name: userName, isOwner, hasPermission: isOwner };
+              users.push(newUser);
+              global.classroomUsers!.set(roomId, users);
+          }
+          global.io!.to(roomId).emit("users-update", users);
+      }
+    });
+    
+    socket.on('leave-room', (roomId: string, userName: string) => {
+      socket.leave(roomId);
+      console.log(`Socket ${socket.id} (${userName}) left room ${roomId}`);
 
-        const classroom = classrooms.find(c => c.id === roomId);
-        if (classroom) {
-            const users = classroomUsers.get(roomId) || [];
-            const userExists = users.some(u => u.name === userName);
+      if (global.ownerSockets!.get(roomId) === socket.id) {
+          global.ownerSockets!.delete(roomId);
+      }
 
-            if (!userExists) {
-                const newUser: User = { id: socket.id, name: userName, isOwner, hasPermission: isOwner };
-                users.push(newUser);
-                classroomUsers.set(roomId, users);
-            }
-            io!.to(roomId).emit("users-update", users);
-        }
-      });
+      const users = global.classroomUsers!.get(roomId) || [];
+      const updatedUsers = users.filter(u => u.name !== userName);
+      global.classroomUsers!.set(roomId, updatedUsers);
+      global.io!.to(roomId).emit('users-update', updatedUsers);
+    });
+
+    socket.on('remove-user', ({ roomId, userId }: { roomId: string, userId: string }) => {
+      const users = global.classroomUsers!.get(roomId) || [];
+      const updatedUsers = users.filter(u => u.id !== userId);
+      global.classroomUsers!.set(roomId, updatedUsers);
+      global.io!.to(roomId).emit('users-update', updatedUsers);
+      global.io!.to(userId).emit('kicked-notification');
+    });
+
+    socket.on("kick-and-clear-user", ({ roomId, userId, classroomName }: { roomId: string, userId: string, classroomName: string }) => {
+      const users = global.classroomUsers!.get(roomId) || [];
+      const updatedUsers = users.filter(u => u.id !== userId);
+      global.classroomUsers!.set(roomId, updatedUsers);
+      global.io!.to(roomId).emit('users-update', updatedUsers);
       
-      socket.on('leave-room', (roomId: string, userName: string) => {
-        socket.leave(roomId);
-        console.log(`Socket ${socket.id} (${userName}) left room ${roomId}`);
-
-        if (ownerSockets.get(roomId) === socket.id) {
-            ownerSockets.delete(roomId);
-        }
-
-        const users = classroomUsers.get(roomId) || [];
-        const updatedUsers = users.filter(u => u.name !== userName);
-        classroomUsers.set(roomId, updatedUsers);
-        io!.to(roomId).emit('users-update', updatedUsers);
-      });
-
-      socket.on('remove-user', ({ roomId, userId }: { roomId: string, userId: string }) => {
-        const users = classroomUsers.get(roomId) || [];
-        const updatedUsers = users.filter(u => u.id !== userId);
-        classroomUsers.set(roomId, updatedUsers);
-        io!.to(roomId).emit('users-update', updatedUsers);
-        io!.to(userId).emit('kicked-notification');
-      });
-
-      socket.on("kick-and-clear-user", ({ roomId, userId, classroomName }: { roomId: string, userId: string, classroomName: string }) => {
-        const users = classroomUsers.get(roomId) || [];
-        const updatedUsers = users.filter(u => u.id !== userId);
-        classroomUsers.set(roomId, updatedUsers);
-        io!.to(roomId).emit('users-update', updatedUsers);
-        
-        const resetCode = `// Welcome to ${classroomName}!`;
-        io!.to(roomId).emit("code-reset", resetCode);
-        
-        io!.to(userId).emit('kicked-notification');
-      });
-
-      socket.on("code-change", (data: any) => {
-        const { roomId, code } = data;
-        socket.to(roomId).emit("code-update", code);
-      });
-
-      socket.on("language-change", (data: any) => {
-        const { roomId, language } = data;
-        socket.to(roomId).emit("language-update", language);
-      });
+      const resetCode = `// Welcome to ${classroomName}!`;
+      global.io!.to(roomId).emit("code-reset", resetCode);
       
-      socket.on("collab-mode-change", (data: any) => {
-        const { roomId, collabMode } = data;
-        socket.to(roomId).emit("collab-mode-update", collabMode);
-      });
-      
-      socket.on('permission-request', ({ roomId, studentId, studentName }: { roomId: string, studentId: string, studentName: string }) => {
-        const ownerSocketId = ownerSockets.get(roomId);
-        if (ownerSocketId) {
-          io!.to(ownerSocketId).emit('permission-request-to-owner', { studentId, studentName });
-        }
-      });
-      
-      socket.on('permission-response', ({ roomId, studentId, approved }: { roomId: string, studentId: string, approved: boolean }) => {
-        const users = classroomUsers.get(roomId) || [];
-        const updatedUsers = users.map(u => 
-          u.id === studentId ? { ...u, hasPermission: approved } : u
-        );
-        classroomUsers.set(roomId, updatedUsers);
-        io!.to(roomId).emit('users-update', updatedUsers);
-        io!.to(studentId).emit('permission-response-from-owner', { permissionGranted: approved });
-      });
+      global.io!.to(userId).emit('kicked-notification');
+    });
 
-      socket.on("disconnect", () => {
-        console.log("A user disconnected:", socket.id);
-        classroomUsers.forEach((users, roomId) => {
-            const user = users.find(u => u.id === socket.id);
-            if (user) {
-                if (ownerSockets.get(roomId) === socket.id) {
-                    classrooms = classrooms.filter(c => c.id !== roomId);
-                    classroomUsers.delete(roomId);
-                    ownerSockets.delete(roomId);
-                    io!.emit("classrooms-update", classrooms);
-                    io!.to(roomId).emit("classroom-deleted-notification");
-                } else {
-                  const updatedUsers = users.filter(u => u.id !== socket.id);
-                  classroomUsers.set(roomId, updatedUsers);
-                  io!.to(roomId).emit('users-update', updatedUsers);
-                }
-            }
-        });
+    socket.on("code-change", (data: any) => {
+      const { roomId, code } = data;
+      socket.to(roomId).emit("code-update", code);
+    });
+
+    socket.on("language-change", (data: any) => {
+      const { roomId, language } = data;
+      socket.to(roomId).emit("language-update", language);
+    });
+    
+    socket.on("collab-mode-change", (data: any) => {
+      const { roomId, collabMode } = data;
+      socket.to(roomId).emit("collab-mode-update", collabMode);
+    });
+    
+    socket.on('permission-request', ({ roomId, studentId, studentName }: { roomId: string, studentId: string, studentName: string }) => {
+      const ownerSocketId = global.ownerSockets!.get(roomId);
+      if (ownerSocketId) {
+        global.io!.to(ownerSocketId).emit('permission-request-to-owner', { studentId, studentName });
+      }
+    });
+    
+    socket.on('permission-response', ({ roomId, studentId, approved }: { roomId: string, studentId: string, approved: boolean }) => {
+      const users = global.classroomUsers!.get(roomId) || [];
+      const updatedUsers = users.map(u => 
+        u.id === studentId ? { ...u, hasPermission: approved } : u
+      );
+      global.classroomUsers!.set(roomId, updatedUsers);
+      global.io!.to(roomId).emit('users-update', updatedUsers);
+      global.io!.to(studentId).emit('permission-response-from-owner', { permissionGranted: approved });
+    });
+
+    socket.on("disconnect", () => {
+      console.log("A user disconnected:", socket.id);
+      global.classroomUsers!.forEach((users, roomId) => {
+          const user = users.find(u => u.id === socket.id);
+          if (user) {
+              if (global.ownerSockets!.get(roomId) === socket.id) {
+                  global.classrooms = global.classrooms!.filter(c => c.id !== roomId);
+                  global.classroomUsers!.delete(roomId);
+                  global.ownerSockets!.delete(roomId);
+                  global.io!.emit("classrooms-update", global.classrooms);
+                  global.io!.to(roomId).emit("classroom-deleted-notification");
+              } else {
+                const updatedUsers = users.filter(u => u.id !== socket.id);
+                global.classroomUsers!.set(roomId, updatedUsers);
+                global.io!.to(roomId).emit('users-update', updatedUsers);
+              }
+          }
       });
     });
-  }
+  });
   
   return new Response(null, { status: 200 });
 }

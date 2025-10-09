@@ -8,16 +8,16 @@
   ],
   "routes": [
     {
-      "src": "/classroom(.*)",
-      "dest": "code-review/src/app/classroom/$1"
+      "src": "/classroom/(.*)",
+      "dest": "code-review/classroom/$1"
     },
     {
       "src": "/api/socket_io(.*)",
-      "dest": "code-review/src/app/api/socket_io/route.ts"
+      "dest": "code-review/api/socket_io"
     },
     {
       "src": "/api/socket(.*)",
-      "dest": "code-review/src/app/api/socket/route.ts"
+      "dest": "code-review/api/socket"
     },
     {
       "src": "/(.*)",
