@@ -1,10 +1,10 @@
-# Code Review Suite
+# Code Review Platform
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-blue.svg)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/next.js-15.3.3-blue.svg)](https://nextjs.org/)
 
-A comprehensive web application suite featuring an AI-powered code review platform and a live classroom for collaborative coding, enabling developers to analyze code quality and collaborate in real-time.
+A comprehensive web application featuring an AI-powered code review platform and a live classroom for collaborative coding, enabling developers to analyze code quality and collaborate in real-time.
 
 ## 🚀 Features
 
