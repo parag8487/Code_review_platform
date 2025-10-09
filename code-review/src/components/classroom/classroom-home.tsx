@@ -30,7 +30,9 @@ export function ClassroomHome() {
 
   useEffect(() => {
     const socketInitializer = async () => {
-      await fetch("/api/socket");
+      // Initialize the socket.io server
+      await fetch("/api/socket_io");
+      
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       socket = io(siteUrl, {
         path: "/api/socket_io",

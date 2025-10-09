@@ -1,4 +1,3 @@
-import { Server as NetServer } from "http";
 import { NextRequest } from "next/server";
 import { Server as ServerIO } from "socket.io";
 import type { Classroom } from "@/components/classroom/classroom-home";
@@ -6,19 +5,24 @@ import type { User } from "@/types/classroom";
 
 export const dynamic = "force-dynamic";
 
+let io: ServerIO | null = null;
 let classrooms: Classroom[] = [];
 const classroomUsers = new Map<string, User[]>();
 const ownerSockets = new Map<string, string>(); // Map classroomId to owner's socket.id
 
 export async function GET(req: NextRequest) {
-  // @ts-ignore
-  if (!req.socket.server.io) {
-    console.log("*First use, starting socket.io");
-
-    // @ts-ignore
-    const io = new ServerIO(req.socket.server, {
+  if (!io) {
+    // Create a new HTTP server for Socket.IO
+    const http = require("http");
+    const server = http.createServer();
+    
+    io = new ServerIO(server, {
       path: "/api/socket_io",
       addTrailingSlash: false,
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+      }
     });
 
     io.on("connection", (socket: any) => {
@@ -31,14 +35,14 @@ export async function GET(req: NextRequest) {
       socket.on("create-classroom", (classroom: Classroom) => {
         classrooms.push(classroom);
         classroomUsers.set(classroom.id, []);
-        io.emit("classrooms-update", classrooms);
+        io!.emit("classrooms-update", classrooms);
       });
       
       socket.on("delete-classroom", (classroomId: string) => {
         classrooms = classrooms.filter(c => c.id !== classroomId);
         classroomUsers.delete(classroomId);
         ownerSockets.delete(classroomId);
-        io.emit("classrooms-update", classrooms);
+        io!.emit("classrooms-update", classrooms);
         socket.to(classroomId).emit("classroom-deleted-notification");
       });
 
@@ -47,7 +51,7 @@ export async function GET(req: NextRequest) {
         socket.emit("classroom-data", classroom);
         if(classroom) {
             const users = classroomUsers.get(classroomId) || [];
-            io.to(classroomId).emit("users-update", users);
+            io!.to(classroomId).emit("users-update", users);
         }
       });
 
@@ -69,7 +73,7 @@ export async function GET(req: NextRequest) {
                 users.push(newUser);
                 classroomUsers.set(roomId, users);
             }
-            io.to(roomId).emit("users-update", users);
+            io!.to(roomId).emit("users-update", users);
         }
       });
       
@@ -84,27 +88,27 @@ export async function GET(req: NextRequest) {
         const users = classroomUsers.get(roomId) || [];
         const updatedUsers = users.filter(u => u.name !== userName);
         classroomUsers.set(roomId, updatedUsers);
-        io.to(roomId).emit('users-update', updatedUsers);
+        io!.to(roomId).emit('users-update', updatedUsers);
       });
 
       socket.on('remove-user', ({ roomId, userId }: { roomId: string, userId: string }) => {
         const users = classroomUsers.get(roomId) || [];
         const updatedUsers = users.filter(u => u.id !== userId);
         classroomUsers.set(roomId, updatedUsers);
-        io.to(roomId).emit('users-update', updatedUsers);
-        io.to(userId).emit('kicked-notification');
+        io!.to(roomId).emit('users-update', updatedUsers);
+        io!.to(userId).emit('kicked-notification');
       });
 
       socket.on("kick-and-clear-user", ({ roomId, userId, classroomName }: { roomId: string, userId: string, classroomName: string }) => {
         const users = classroomUsers.get(roomId) || [];
         const updatedUsers = users.filter(u => u.id !== userId);
         classroomUsers.set(roomId, updatedUsers);
-        io.to(roomId).emit('users-update', updatedUsers);
+        io!.to(roomId).emit('users-update', updatedUsers);
         
         const resetCode = `// Welcome to ${classroomName}!`;
-        io.to(roomId).emit("code-reset", resetCode);
+        io!.to(roomId).emit("code-reset", resetCode);
         
-        io.to(userId).emit('kicked-notification');
+        io!.to(userId).emit('kicked-notification');
       });
 
       socket.on("code-change", (data: any) => {
@@ -125,7 +129,7 @@ export async function GET(req: NextRequest) {
       socket.on('permission-request', ({ roomId, studentId, studentName }: { roomId: string, studentId: string, studentName: string }) => {
         const ownerSocketId = ownerSockets.get(roomId);
         if (ownerSocketId) {
-          io.to(ownerSocketId).emit('permission-request-to-owner', { studentId, studentName });
+          io!.to(ownerSocketId).emit('permission-request-to-owner', { studentId, studentName });
         }
       });
       
@@ -135,10 +139,9 @@ export async function GET(req: NextRequest) {
           u.id === studentId ? { ...u, hasPermission: approved } : u
         );
         classroomUsers.set(roomId, updatedUsers);
-        io.to(roomId).emit('users-update', updatedUsers);
-        io.to(studentId).emit('permission-response-from-owner', { permissionGranted: approved });
+        io!.to(roomId).emit('users-update', updatedUsers);
+        io!.to(studentId).emit('permission-response-from-owner', { permissionGranted: approved });
       });
-
 
       socket.on("disconnect", () => {
         console.log("A user disconnected:", socket.id);
@@ -149,22 +152,17 @@ export async function GET(req: NextRequest) {
                     classrooms = classrooms.filter(c => c.id !== roomId);
                     classroomUsers.delete(roomId);
                     ownerSockets.delete(roomId);
-                    io.emit("classrooms-update", classrooms);
-                    io.to(roomId).emit("classroom-deleted-notification");
+                    io!.emit("classrooms-update", classrooms);
+                    io!.to(roomId).emit("classroom-deleted-notification");
                 } else {
                   const updatedUsers = users.filter(u => u.id !== socket.id);
                   classroomUsers.set(roomId, updatedUsers);
-                  io.to(roomId).emit('users-update', updatedUsers);
+                  io!.to(roomId).emit('users-update', updatedUsers);
                 }
             }
         });
       });
     });
-
-    // @ts-ignore
-    req.socket.server.io = io;
-  } else {
-    console.log("Socket.io already running!");
   }
   
   return new Response(null, { status: 200 });

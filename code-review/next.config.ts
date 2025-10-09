@@ -58,9 +58,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   // Add this for Vercel compatibility
-  experimental: {
-    serverComponentsExternalPackages: ['bcrypt']
-  }
+  serverExternalPackages: ['bcrypt']
 };
 
 export default nextConfig;
