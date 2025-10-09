@@ -1,6 +1,6 @@
 "use client";
 
-import type { User } from "@/app/classroom/[id]/page";
+import type { User } from "@/types/classroom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";

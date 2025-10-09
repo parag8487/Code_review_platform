@@ -2,8 +2,7 @@ import { Server as NetServer } from "http";
 import { NextRequest } from "next/server";
 import { Server as ServerIO } from "socket.io";
 import type { Classroom } from "@/components/classroom/classroom-home";
-import type { User } from "@/app/classroom/[id]/page";
-
+import type { User } from "@/types/classroom";
 
 export const dynamic = "force-dynamic";
 

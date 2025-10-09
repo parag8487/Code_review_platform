@@ -1,4 +1,4 @@
-its "use client";
+"use client";
 
 import { useState, useEffect, useMemo, useTransition, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
@@ -7,17 +7,11 @@ import { UserRoster } from "@/components/classroom/user-roster";
 import { OwnerIndicator } from "@/components/classroom/owner-indicator";
 import { useToast } from "@/hooks/use-toast";
 import type { Classroom } from "@/components/classroom/classroom-home";
+import type { User } from "@/types/classroom";
 import { Home, Loader2, Users, Bot, UserCheck, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import io, { Socket } from "socket.io-client";
 import { toast as toastAction } from "@/hooks/use-toast";
-
-export interface User {
-  id: string;
-  name: string;
-  isOwner: boolean;
-  hasPermission?: boolean;
-}
 
 let socket: Socket;
 
