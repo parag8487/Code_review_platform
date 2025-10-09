@@ -50,10 +50,10 @@ npm install
 
 #### Code Review Platform Environment Variables
 
-Create a `.env.local` file in the `code-review` directory with the following variables:
+Create a `.env` file in the `code-review` directory with the following variables:
 
 ```env
-# AI API Key for code analysis
+# AI API Key for code analysis (get from Google Cloud Console)
 GEMINI_API_KEY=your_google_ai_api_key
 
 # Database configuration
@@ -66,7 +66,7 @@ DB_NAME=your_database_name
 # Session secret (generate using: node generate-secret.js)
 SESSION_SECRET=your_random_session_secret_key_at_least_32_characters
 
-# Email configuration for contact form
+# Email configuration for contact form (Gmail SMTP)
 GMAIL_USER=your-email@gmail.com
 GMAIL_APP_PASSWORD=your-app-password
 
@@ -91,7 +91,7 @@ For the contact form to work, you need to set up Gmail SMTP:
    - Generate a new app password for "Mail"
    - Use this password as your `GMAIL_APP_PASSWORD`
 
-2. Set the environment variables:
+2. Set the environment variables in your `.env` file:
    ```env
    GMAIL_USER=your-email@gmail.com
    GMAIL_APP_PASSWORD=your-app-password
