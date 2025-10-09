@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "code-review/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "live-classroom/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/classroom(.*)",
+      "dest": "live-classroom/$1"
+    },
+    {
+      "src": "/api/socket_io(.*)",
+      "dest": "live-classroom/src/pages/api/socket.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "code-review/$1"
+    }
+  ]
+}

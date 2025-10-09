@@ -1,0 +1,27 @@
+{
+  "name": "code-review-suite",
+  "version": "1.0.0",
+  "description": "A suite containing both the Code Review and Live Classroom applications",
+  "workspaces": [
+    "code-review",
+    "live-classroom"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=code-review\" \"npm run dev --workspace=live-classroom\"",
+    "start": "concurrently \"npm run start --workspace=code-review\" \"npm run start --workspace=live-classroom\"",
+    "build": "npm run build --workspaces"
+  },
+  "keywords": [
+    "code-review",
+    "live-classroom",
+    "nextjs",
+    "collaboration"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/dotenv": "^8.2.3",
+    "concurrently": "^8.0.0"
+  }
+}
