@@ -1,0 +1,21 @@
+{
+  "name": "code-review-suite",
+  "version": "1.0.0",
+  "description": "A suite containing both the Code Review and Live Classroom applications",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix \"Code review\"\" \"npm run dev --prefix \"live classroom\"\"",
+    "start": "concurrently \"npm run start --prefix \"Code review\"\" \"npm run start --prefix \"live classroom\"\"",
+    "deploy": "git init && git add . && git commit -m \"Initial commit with full project\" && git remote add origin https://github.com/parag8487/Code_review_platform.git && git push -u origin master"
+  },
+  "keywords": [
+    "code-review",
+    "live-classroom",
+    "nextjs",
+    "collaboration"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "welcome-ai",
+      "description": "Abstract visualization of AI data analysis.",
+      "imageUrl": "https://picsum.photos/seed/101/600/400",
+      "imageHint": "AI analysis"
+    },
+    {
+      "id": "welcome-collab",
+      "description": "People collaborating over a digital interface.",
+      "imageUrl": "https://picsum.photos/seed/102/600/400",
+      "imageHint": "team collaboration"
+    },
+    {
+      "id": "welcome-classroom",
+      "description": "A modern, tech-enabled classroom environment.",
+      "imageUrl": "https://picsum.photos/seed/103/600/400",
+      "imageHint": "digital classroom"
+    },
+    {
+      "id": "auth-image",
+      "description": "Abstract geometric pattern",
+      "imageUrl": "https://picsum.photos/seed/104/1200/900",
+      "imageHint": "abstract geometric"
+    }
+  ]
+}
