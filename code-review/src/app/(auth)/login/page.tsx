@@ -1,5 +1,6 @@
 import { LoginForm } from '@/components/auth/login-form';
 import Particles from '@/components/Particles';
+import { Suspense } from 'react';
 
 export default function LoginPage() {
   return (
@@ -17,7 +18,9 @@ export default function LoginPage() {
         />
       </div>
       <div className="relative" style={{ zIndex: 100 }}>
-        <LoginForm />
+        <Suspense fallback={<div>Loading...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );
