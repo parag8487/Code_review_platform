@@ -157,12 +157,12 @@ const WelcomePage: React.FC = () => {
             >
               Start Code Review
             </Link>
-            <button 
-              onClick={() => window.open('http://localhost:5000', '_blank')}
+            <Link 
+              href="/classroom" 
               className={`font-semibold py-3 px-6 rounded-lg shadow-md transition-colors border ${isDarkMode ? 'bg-card-dark text-white border-dark-border hover:bg-card-dark/80' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'}`}
             >
               Live Classroom
-            </button>
+            </Link>
           </div>
         </section>
 
