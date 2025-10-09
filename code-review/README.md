@@ -1,15 +1,23 @@
-# AI Code Review Platform
+# AI Code Review Platform with Integrated Live Classroom
 
-A modern web application for collaborative code reviews with AI-powered analysis.
+A modern web application for collaborative code reviews with AI-powered analysis and real-time collaborative coding classroom.
 
 ## Features
 
+### Code Review Platform
 - User authentication and profile management
 - Code review creation and management
 - AI-powered code analysis for performance metrics
 - Comment system for collaborative feedback
 - Code version history tracking
 - Responsive design for all device sizes
+
+### Live Classroom
+- Real-time code sharing and synchronization
+- Multi-user collaborative coding environment
+- Classroom management system
+- Support for multiple programming languages
+- User roster for participant tracking
 
 ## Technology Stack
 
@@ -18,6 +26,7 @@ A modern web application for collaborative code reviews with AI-powered analysis
 - **Database**: PostgreSQL with connection pooling
 - **Authentication**: Session-based with JWT tokens
 - **AI Integration**: Google AI for code analysis
+- **Real-time Communication**: Socket.IO
 - **UI Components**: shadcn/ui, Radix UI
 - **Code Editor**: Monaco Editor
 
@@ -116,6 +125,13 @@ The application implements a secure session-based authentication system:
 - Users can mark reviews as complete or in progress
 - Users can delete their own reviews (with automatic cleanup of related data)
 
+### Live Classroom Features
+- Create and join coding sessions with unique classroom IDs
+- Real-time code synchronization across all participants
+- Language selection for different programming languages
+- User management with owner and participant roles
+- Permission-based editing controls
+
 ## Environment Variables
 
 Create a `.env` file in the `code-review` directory with the following variables:
@@ -197,6 +213,9 @@ For the contact form to work, you need to set up Gmail SMTP:
 
 7. **Access the application**
    Open your browser and navigate to `http://localhost:9002`
+   
+   - Code Review Platform: http://localhost:9002
+   - Live Classroom: http://localhost:9002/classroom
 
 ## Deployment
 
@@ -268,6 +287,17 @@ The application follows modern development practices:
 - Component-based architecture
 - Responsive design principles
 - Clean code organization
+
+## API Endpoints
+
+### Code Review Platform
+- `POST /api/init` - Initialize database (run once after setup)
+- `GET /api/health` - Health check endpoint
+- `POST /api/test-ai` - Test AI integration
+- `POST /api/contact` - Contact form submission
+
+### Live Classroom
+- `GET /api/socket_io` - Socket.IO endpoint for real-time communication
 
 ## Troubleshooting
 
