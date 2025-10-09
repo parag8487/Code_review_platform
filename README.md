@@ -45,7 +45,7 @@ code-review-platform/
 │   │   └── ...
 │   ├── package.json          # Dependencies and scripts
 │   └── README.md             # Live classroom application documentation
-├── package.json              # Root package with workspaces
+├── package.json              # Root package with workspaces and concurrently script
 └── ...
 ```
 
@@ -152,8 +152,14 @@ The application will be available at: http://localhost:5000
 
 ## ⚡ Running Both Applications
 
-To run both applications simultaneously, use the provided script:
+You can run both applications simultaneously using one of these methods:
 
+### Method 1: Using the root package.json script (Recommended)
+```bash
+npm run dev
+```
+
+### Method 2: Using the provided batch scripts
 ```bash
 # On Windows
 start-both.bat
@@ -161,6 +167,10 @@ start-both.bat
 # On macOS/Linux
 ./start-both.sh
 ```
+
+Applications will be available at:
+- Code Review Platform: http://localhost:9002
+- Live Classroom: http://localhost:5000
 
 ## 🧪 Development
 
