@@ -11,6 +11,14 @@
   ],
   "routes": [
     {
+      "src": "/api/socket_io(.*)",
+      "dest": "/api/socket_io"
+    },
+    {
+      "src": "/api/socket(.*)",
+      "dest": "/api/socket"
+    },
+    {
       "src": "/(.*)",
       "dest": "/"
     }
