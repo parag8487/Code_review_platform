@@ -1,4 +1,4 @@
-# AI Code Review Platform with Integrated Live Classroom
+# Code Review Platform
 
 A modern web application for collaborative code reviews with AI-powered analysis and real-time collaborative coding classroom.
 
