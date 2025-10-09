@@ -1,0 +1,41 @@
+name: Validate Code
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: code-review/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd code-review
+        npm ci
+
+    - name: Run route validation
+      run: |
+        cd code-review
+        npm run validate
+
+    - name: Run TypeScript compilation
+      run: |
+        cd code-review
+        npm run typecheck
+
+    - name: Run build
+      run: |
+        cd code-review
+        npm run build
