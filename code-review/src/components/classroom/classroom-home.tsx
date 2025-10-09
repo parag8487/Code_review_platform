@@ -32,34 +32,47 @@ export function ClassroomHome() {
   useEffect(() => {
     const socketInitializer = async () => {
       try {
-        // Initialize the socket.io server
-        const response = await fetch("/api/socket_io");
-        if (!response.ok) {
-          throw new Error(`Failed to initialize socket server: ${response.status}`);
+        // Get the site URL - use the window origin in browser
+        const siteUrl = typeof window !== 'undefined' 
+          ? window.location.origin 
+          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
+        
+        // Disconnect any existing socket
+        if (socket) {
+          socket.disconnect();
         }
         
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        // Create new socket connection with proper configuration
         socket = io(siteUrl, {
           path: "/api/socket_io",
-          addTrailingSlash: false,
+          transports: ['websocket', 'polling'], // Try both transports
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000,
+          timeout: 10000,
+          // Add proper CORS headers
+          withCredentials: true,
         });
 
         socket.on("connect", () => {
-          console.log("Connected to socket.io server");
+          console.log("Connected to socket.io server with ID:", socket?.id);
           setConnectionError(false);
           socket!.emit("get-classrooms");
         });
         
         socket.on("connect_error", (error) => {
           console.error("Socket connection error:", error);
+          console.error("Error code:", error.message);
           setConnectionError(true);
         });
         
         socket.on("classrooms-update", (updatedClassrooms: Classroom[]) => {
           setClassrooms(updatedClassrooms);
+        });
+        
+        // Handle disconnection
+        socket.on("disconnect", (reason) => {
+          console.log("Socket disconnected:", reason);
         });
       } catch (error) {
         console.error("Failed to initialize socket connection:", error);
@@ -92,6 +105,9 @@ export function ClassroomHome() {
   const handleRefresh = () => {
     if (socket) {
       socket.emit("get-classrooms");
+    } else {
+      // If socket is not available, try to reconnect
+      window.location.reload();
     }
   };
 
