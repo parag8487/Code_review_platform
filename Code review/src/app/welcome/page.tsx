@@ -25,21 +25,21 @@ const WelcomePage: React.FC = () => {
   const features = [
     {
       title: 'AI-Powered Analysis',
-      description: 'Leverage cutting-edge artificial intelligence to gain deep insights from your data. Our platform simplifies complex analysis, providing actionable intelligence.',
+      description: 'Leverage cutting-edge artificial intelligence to gain deep insights from your data. Our platform simplifies complex analysis, providing actionable good intelligence.',
       icon: "auto_awesome",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrhlavDcdNeHo4JZrlsdRfYr85jnRGtKR21Mi0OHsk20Zmp-PcByuocVpgm96x28Jm-hXYbWL-Z2-GiuTqMCUql9f19ER8Tx8wcC_pvQqiTH0P_1Lj-A_B1R4rGgO_FU2umnHNwmkit29WClgOgdbYnMHoIOzorKEgwStb1pi3qrh5YEjmlzWg2R_hu9xkV73vSXujg0_MquiUPUQyK81Qpq7QfUmM4Hnu7moVGik4kAXep_evuhWRiTxZW7y7DAbNfUvu-wkKUyA"
+      image: "/ai_analysis.png"
     },
     {
       title: 'Real-Time Collaboration',
       description: 'Work together seamlessly with your team. Our platform supports concurrent editing, instant messaging, and shared workspaces to boost productivity and innovation.',
       icon: "people",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDR0mkq3YJDKpGKaAlpzAylNQxNugkmKpNpSiizMnkA3WOGNW-Xy_oomp0_J8V-AsZAG5UgKe78dL3olPbLt-2V3AvssAtwpmsWhipRQS3ivt3Adik0jcMKyiSL_SUj9nzsKGvp46aa92E-4qp2cpg2lOCsI8lHh9RWkousQZruFMJv-ARPFItvqaOmaf65XSaPJKYSMIYsD6tBzfxtrNhtTUo0U8HafYRYJb4YRLjfvEebPZpsfi1SIuOQDtUtw6U9MSnVl5GqzxM"
+      image: "/real_time_collaboration.png"
     },
     {
       title: 'Collaborative Classrooms',
       description: 'Transform education with interactive and engaging virtual classrooms. Foster a dynamic learning environment with tools designed for modern pedagogy.',
       icon: "school",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA4Kxd4TYw5HEp9bReEorQRqERvdqe3B6PHPZ87aNewaI5nL2GyjR-hBIeTpUSKZ2QAm8QJ4joWYLqcp1mMbr8Pvl9KjEpUifuLcjuB_MkGGOxvHo7bRIIFpRms-s9LNjMxHZp3DE0MfH2Qbe4L-g77ZJCwKoY6FAKCtLYgPqfVyGP0GVa9_mwcKOO9WRQBAA0FcR2FgLI9HiQrkir_WDXOffbCfWU0h8hrZ-ZVu6oRl5L-cen7F4moG0NDn80uCjcDoB2-FHbp_A4"
+      image: "/collaborative_classrooms.png"
     },
   ];
 

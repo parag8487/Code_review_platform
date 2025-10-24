@@ -369,7 +369,7 @@ export default function CodeReviewPage() {
                 bgColor: "#0D0716",
                 textColor: "#fff",
                 links: [
-                  { label: "Dashboard", href: "/welcome", ariaLabel: "Go to Dashboard" },
+                  { label: "Home", href: "/welcome", ariaLabel: "Go to Home page" },
                   { label: "Reviews", href: "/code-review", ariaLabel: "View All Reviews" }
                 ]
               },
@@ -388,8 +388,8 @@ export default function CodeReviewPage() {
                 textColor: "#fff",
                 links: [
                   { label: "Email", href: "mailto:paragmohare049@gmail.com", ariaLabel: "Email us" },
-                  { label: "Twitter", href: "https://twitter.com/codereviewpro", ariaLabel: "Twitter" },
-                  { label: "LinkedIn", href: "https://linkedin.com/company/codereviewpro", ariaLabel: "LinkedIn" }
+                  { label: "Github", href: "https://github.com/parag8487/Code_review_platform", ariaLabel: "Github" },
+                  { label: "Feedback", href: "/contact", ariaLabel: "Feedback" }
                 ]
               }
             ]}
