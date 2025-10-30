@@ -67,7 +67,7 @@ export function UserRoster({ users, isOwner, onRemoveUser, onKickAndClear }: Use
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Kick the f***er</p>
+                      <p>Kick the user</p>
                     </TooltipContent>
                   </Tooltip>
                  </div>

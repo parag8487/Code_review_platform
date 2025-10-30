@@ -80,6 +80,7 @@ function CodeEditorCore() {
   const { toast } = useToast();
 
   const [saveState, saveAction, isSaving] = useActionState(saveCode, { message: "", success: false });
+  const [conflictDetected, setConflictDetected] = React.useState(false);
 
   React.useEffect(() => {
     if (!reviewId) {
@@ -230,6 +231,7 @@ function CodeEditorCore() {
     setAnalysisResult(null);
     // Always disable save button on new analysis
     setIsSaveEnabled(false); 
+    setConflictDetected(false); // Reset conflict detection on new analysis
     try {
       const result = await performSmartAnalysis(reviewId, code, language);
       setAnalysisResult(result);
@@ -331,6 +333,12 @@ function CodeEditorCore() {
       if (saveState.success) {
         // After a successful save, disable the button again to enforce the workflow
         setIsSaveEnabled(false);
+        setAnalysisResult(null);
+        setConflictDetected(false);
+      } else if (saveState.message.includes("The code was modified by another user")) {
+        // If we get a conflict error, disable the save button and set conflict flag
+        setIsSaveEnabled(false);
+        setConflictDetected(true);
         setAnalysisResult(null);
       }
     }
@@ -436,15 +444,17 @@ function CodeEditorCore() {
                 variant="outline" 
                 size="sm" 
                 type="submit" 
-                disabled={isSaving || !isSaveEnabled}
+                disabled={isSaving || !isSaveEnabled || conflictDetected}
                 className={`gap-2 rounded-lg border ${
-                  isSaveEnabled 
+                  isSaveEnabled && !conflictDetected
                     ? 'border-emerald-400/50 bg-emerald-900/20 text-emerald-300 hover:bg-emerald-900/30' 
                     : 'border-[#1F1A28] bg-[#060010] text-gray-400 hover:bg-[#1a1a2e]'
                 }`}
               >
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                <span className="hidden sm:inline">Save</span>
+                <span className="hidden sm:inline">
+                  {conflictDetected ? "Conflict - Re-analyze Required" : "Save"}
+                </span>
               </Button>
             </form>
             

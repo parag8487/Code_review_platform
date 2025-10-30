@@ -15,8 +15,11 @@ import GoogleLogo from "@/components/svgs/GoogleLogo";
 import GitHubLogo from "@/components/svgs/GitHubLogo";
 import GoogleCloudLogo from "@/components/svgs/GoogleCloudLogo";
 import GoogleColabLogo from "@/components/svgs/GoogleColabLogo";
-import GoogleDriveLogo from "@/components/svgs/GoogleDriveLogo";
 import GoogleGeminiLogo from "@/components/svgs/GoogleGeminiLogo";
+
+// New logo imports
+import PeopleLogo from "@/components/svgs/PeopleLogo";
+import SchoolLogo from "@/components/svgs/SchoolLogo";
 
 const WelcomePage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -47,9 +50,8 @@ const WelcomePage: React.FC = () => {
   const logos = [
     { node: <GoogleLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "Google" },
     { node: <GitHubLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "GitHub" },
-    { node: <GoogleCloudLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "Google Cloud" },
-    { node: <GoogleColabLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "Google Colab" },
-    { node: <GoogleDriveLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "Google Drive" },
+    { node: <SchoolLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "School" },
+    { node: <PeopleLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "People" },
     { node: <GoogleGeminiLogo className={`h-10 w-auto ${isDarkMode ? 'text-white' : 'text-black'}`} />, ariaLabel: "Google Gemini" },
   ];
 
