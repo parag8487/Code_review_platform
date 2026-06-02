@@ -1,27 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "code-review/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/classroom/(.*)",
-      "dest": "code-review/classroom/$1"
-    },
-    {
-      "src": "/api/socket_io(.*)",
-      "dest": "code-review/api/socket_io"
-    },
-    {
-      "src": "/api/socket(.*)",
-      "dest": "code-review/api/socket"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "code-review/$1"
-    }
-  ]
+  "framework": "nextjs",
+  "buildCommand": "npm run build --workspace=code-review",
+  "outputDirectory": "code-review/.next",
+  "installCommand": "npm install"
 }

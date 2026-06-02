@@ -1,16 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from 'next/image';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreateClassroomDialog } from "@/components/classroom/create-classroom-dialog";
 import { JoinClassroomDialog } from "@/components/classroom/join-classroom-dialog";
-import { DoorOpen, Plus, Users, Bot, Code, RefreshCw, Search } from "lucide-react";
+import {
+  DoorOpen,
+  Plus,
+  Users,
+  Bot,
+  Code,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import io, { Socket } from "socket.io-client";
+import Ably from "ably";
 
 export interface Classroom {
   id: string;
@@ -19,97 +33,96 @@ export interface Classroom {
   pass: string;
 }
 
-let socket: Socket | null = null;
+let ablyClient: Ably.Realtime | null = null;
 
 export function ClassroomHome() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
-  const [joiningClassroom, setJoiningClassroom] = useState<Classroom | null>(null);
+  const [joiningClassroom, setJoiningClassroom] = useState<Classroom | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [connectionError, setConnectionError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const socketInitializer = async () => {
-      try {
-        // Get the site URL - use the window origin in browser
-        const siteUrl = typeof window !== 'undefined' 
-          ? window.location.origin 
-          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
-        
-        // Disconnect any existing socket
-        if (socket) {
-          socket.disconnect();
-        }
-        
-        // Create new socket connection with proper configuration for Vercel
-        socket = io(siteUrl, {
-          path: "/api/socket_io",
-          transports: ['polling', 'websocket'], // Try polling first, then websocket
-          reconnection: true,
-          reconnectionAttempts: 10,
-          reconnectionDelay: 2000,
-          reconnectionDelayMax: 10000,
-          randomizationFactor: 0.5,
-          timeout: 20000,
-          withCredentials: true,
-        });
-
-        socket.on("connect", () => {
-          console.log("Connected to socket.io server with ID:", socket?.id);
-          setConnectionError(false);
-          socket!.emit("get-classrooms");
-        });
-        
-        socket.on("connect_error", (error) => {
-          console.error("Socket connection error:", error);
-          console.error("Error code:", error.message);
-          setConnectionError(true);
-        });
-        
-        socket.on("classrooms-update", (updatedClassrooms: Classroom[]) => {
-          setClassrooms(updatedClassrooms);
-        });
-        
-        // Handle disconnection
-        socket.on("disconnect", (reason) => {
-          console.log("Socket disconnected:", reason);
-        });
-      } catch (error) {
-        console.error("Failed to initialize socket connection:", error);
-        setConnectionError(true);
+  const fetchClassrooms = useCallback(async () => {
+    try {
+      const res = await fetch("/api/classroom/list");
+      if (res.ok) {
+        const data = await res.json();
+        setClassrooms(data.classrooms || []);
+        setConnectionError(false);
       }
-    };
-    
-    socketInitializer();
-
-    return () => {
-      if(socket) {
-        socket.disconnect();
-        socket = null;
-      }
+    } catch (error) {
+      console.error("Failed to fetch classrooms:", error);
+      setConnectionError(true);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const handleCreateClassroom = (classroom: Omit<Classroom, "id">) => {
-    const newClassroom = { ...classroom, id: crypto.randomUUID() };
-    if (socket) {
-      socket.emit("create-classroom", newClassroom);
+  useEffect(() => {
+    // Fetch initial classrooms list
+    fetchClassrooms();
+
+    // Subscribe to lobby channel for real-time classroom list updates
+    if (!ablyClient) {
+      ablyClient = new Ably.Realtime({
+        authUrl: "/api/ably-token",
+        authMethod: "GET",
+      });
     }
-    router.push(`/classroom/${newClassroom.id}?owner=true&userName=${classroom.owner}`);
+
+    const channel = ablyClient.channels.get("classrooms-lobby");
+
+    channel.subscribe("classrooms-update", (msg) => {
+      setClassrooms(msg.data.classrooms || []);
+    });
+
+    ablyClient.connection.on("connected", () => {
+      setConnectionError(false);
+    });
+
+    ablyClient.connection.on("failed", () => {
+      setConnectionError(true);
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [fetchClassrooms]);
+
+  const handleCreateClassroom = async (
+    classroom: Omit<Classroom, "id">
+  ) => {
+    const newClassroom = { ...classroom, id: crypto.randomUUID() };
+
+    // Create via API
+    try {
+      await fetch("/api/classroom/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newClassroom),
+      });
+    } catch (error) {
+      console.error("Failed to create classroom:", error);
+    }
+
+    router.push(
+      `/classroom/${newClassroom.id}?owner=true&userName=${classroom.owner}`
+    );
   };
 
-  const handleJoinClassroom = (classroom: Classroom, studentName: string) => {
+  const handleJoinClassroom = (
+    classroom: Classroom,
+    studentName: string
+  ) => {
     router.push(`/classroom/${classroom.id}?userName=${studentName}`);
   };
 
   const handleRefresh = () => {
-    if (socket) {
-      socket.emit("get-classrooms");
-    } else {
-      // If socket is not available, try to reconnect
-      window.location.reload();
-    }
+    fetchClassrooms();
   };
 
   const filteredClassrooms = classrooms.filter((room) =>
@@ -121,8 +134,10 @@ export function ClassroomHome() {
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
-             <Bot size={28} className="text-accent"/>
-            <h1 className="text-2xl font-bold tracking-tight">ClassroomLive</h1>
+            <Bot size={28} className="text-accent" />
+            <h1 className="text-2xl font-bold tracking-tight">
+              ClassroomLive
+            </h1>
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2" />
@@ -136,11 +151,12 @@ export function ClassroomHome() {
           <div className="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg">
             <h3 className="font-bold text-destructive">Connection Error</h3>
             <p className="text-destructive/80">
-              Unable to connect to the classroom server. Please try refreshing the page.
+              Unable to connect to the classroom server. Please try refreshing
+              the page.
             </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="mt-2"
               onClick={handleRefresh}
             >
@@ -151,13 +167,13 @@ export function ClassroomHome() {
         )}
 
         <section className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-              Collaborative Coding, Simplified.
-            </h1>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground">
-              Create your own private classroom, invite students, and start coding
-              together in a real-time, shared editor.
-            </p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+            Collaborative Coding, Simplified.
+          </h1>
+          <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground">
+            Create your own private classroom, invite students, and start coding
+            together in a real-time, shared editor.
+          </p>
         </section>
 
         <div className="mb-8 flex flex-col sm:flex-row gap-4">
@@ -171,7 +187,11 @@ export function ClassroomHome() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" onClick={handleRefresh} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="w-full sm:w-auto"
+          >
             <RefreshCw className="mr-2" />
             Refresh
           </Button>
@@ -180,31 +200,36 @@ export function ClassroomHome() {
         {filteredClassrooms.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredClassrooms.map((room) => (
-              <Card key={room.id} className="flex flex-col overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1">
-                 <div className="relative h-40 w-full">
-                    <Image
-                      src="https://picsum.photos/400/200"
-                      alt="Classroom hero image"
-                      fill
-                      className="object-cover"
-                      data-ai-hint="code abstract"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                 </div>
+              <Card
+                key={room.id}
+                className="flex flex-col overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1"
+              >
+                <div className="relative h-40 w-full">
+                  <Image
+                    src="https://picsum.photos/400/200"
+                    alt="Classroom hero image"
+                    fill
+                    className="object-cover"
+                    data-ai-hint="code abstract"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
                 <CardHeader className="flex-grow">
                   <CardTitle className="truncate">{room.name}</CardTitle>
-                   <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground">
                     <Avatar className="h-6 w-6">
-                      <AvatarFallback>{room.owner.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>
+                        {room.owner.charAt(0).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
-                    <span>{room.owner}'s room</span>
+                    <span>{room.owner}&apos;s room</span>
                   </div>
                 </CardHeader>
                 <CardContent>
-                   <div className="flex items-center text-sm text-muted-foreground">
-                        <Users className="mr-2 h-4 w-4"/>
-                        <span>1 participant</span>
-                   </div>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Active classroom</span>
+                  </div>
                 </CardContent>
                 <CardFooter>
                   <Button
@@ -221,18 +246,23 @@ export function ClassroomHome() {
         ) : (
           <div className="mt-16 flex flex-col items-center justify-center text-center">
             <div className="mx-auto w-fit rounded-full bg-card p-6 border shadow-sm">
-                <Code className="h-16 w-16 text-accent" />
+              <Code className="h-16 w-16 text-accent" />
             </div>
-            <h2 className="mt-8 text-2xl font-semibold">{searchTerm ? "No Matches Found" : "No Classrooms Available"}</h2>
+            <h2 className="mt-8 text-2xl font-semibold">
+              {searchTerm ? "No Matches Found" : "No Classrooms Available"}
+            </h2>
             <p className="mt-2 max-w-md text-muted-foreground">
-              {searchTerm 
+              {searchTerm
                 ? "No classrooms matched your search. Try a different term or create a new classroom."
-                : "It looks like there are no active classrooms right now. Why not be the first to create one?"
-              }
+                : "It looks like there are no active classrooms right now. Why not be the first to create one?"}
             </p>
-            <Button size="lg" className="mt-8" onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2" />
-                Create a Classroom
+            <Button
+              size="lg"
+              className="mt-8"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <Plus className="mr-2" />
+              Create a Classroom
             </Button>
           </div>
         )}

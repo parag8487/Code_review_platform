@@ -2,129 +2,117 @@
 
 /**
  * Route Validation Script
- * This script validates that all required routes and API endpoints exist
- * and are properly configured to prevent 404 errors.
+ * Validates that all required routes and API endpoints exist
+ * and are properly configured.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
 const PROJECT_ROOT = path.join(__dirname, '..');
-const SRC_DIR = path.join(PROJECT_ROOT, 'src');
-const APP_DIR = path.join(SRC_DIR, 'app');
-const API_DIR = path.join(APP_DIR, 'api');
+const APP_DIR = path.join(PROJECT_ROOT, 'src', 'app');
 
-// Required routes that must exist
+// Required page routes
 const REQUIRED_ROUTES = [
-  '/classroom',
-  '/classroom/[id]',
-  '/api/socket_io',
-  '/api/socket'
+  'classroom',
+  'classroom/[id]',
+  'code-editor',
+  'code-review',
+  'contact',
+  'welcome',
 ];
 
-// Required API files that must exist
-const REQUIRED_API_FILES = [
-  'src/app/api/socket_io/route.ts',
-  'src/app/api/socket/route.ts'
+// Required API routes
+const REQUIRED_API_ROUTES = [
+  'api/ably-token',
+  'api/classroom/create',
+  'api/classroom/delete',
+  'api/classroom/get',
+  'api/classroom/join',
+  'api/classroom/kick',
+  'api/classroom/leave',
+  'api/classroom/list',
+  'api/classroom/permission',
+  'api/health',
 ];
 
-// Vercel config files to validate
-const VERCEL_CONFIG_FILES = [
-  'vercel.json'
-];
-
-console.log('🔍 Validating project routes and configurations...\n');
+console.log('🔍 Validating project routes...\n');
 
 let hasErrors = false;
 
-// Check if required app routes exist
-console.log('📁 Checking required app routes...');
+// Check page routes
+console.log('📁 Checking page routes...');
 REQUIRED_ROUTES.forEach(route => {
-  const routePath = path.join(APP_DIR, ...route.replace('/api/', 'api/').split('/').filter(Boolean));
-  if (!fs.existsSync(routePath)) {
-    console.error(`❌ Missing route: ${route} (${routePath})`);
+  const routeDir = path.join(APP_DIR, route);
+  const pageFile = path.join(routeDir, 'page.tsx');
+  if (!fs.existsSync(routeDir) || !fs.existsSync(pageFile)) {
+    console.error(`  ❌ Missing: /${route}`);
     hasErrors = true;
   } else {
-    console.log(`✅ Found route: ${route}`);
+    console.log(`  ✅ /${route}`);
   }
 });
 
 console.log('');
 
-// Check if required API files exist
-console.log('🔌 Checking required API files...');
-REQUIRED_API_FILES.forEach(file => {
+// Check API routes
+console.log('🔌 Checking API routes...');
+REQUIRED_API_ROUTES.forEach(route => {
+  const routeDir = path.join(APP_DIR, route);
+  const routeFile = path.join(routeDir, 'route.ts');
+  if (!fs.existsSync(routeDir) || !fs.existsSync(routeFile)) {
+    console.error(`  ❌ Missing: /${route}`);
+    hasErrors = true;
+  } else {
+    console.log(`  ✅ /${route}`);
+  }
+});
+
+console.log('');
+
+// Check critical lib files
+console.log('📦 Checking core library files...');
+const criticalFiles = [
+  'src/lib/realtime.ts',
+  'src/lib/classroom-store.ts',
+];
+criticalFiles.forEach(file => {
   const filePath = path.join(PROJECT_ROOT, file);
   if (!fs.existsSync(filePath)) {
-    console.error(`❌ Missing API file: ${file}`);
+    console.error(`  ❌ Missing: ${file}`);
     hasErrors = true;
   } else {
-    console.log(`✅ Found API file: ${file}`);
+    console.log(`  ✅ ${file}`);
   }
 });
 
 console.log('');
 
-// Validate Vercel configuration files
-console.log('⚙️  Validating Vercel configuration...');
-VERCEL_CONFIG_FILES.forEach(configFile => {
-  const configPath = path.join(PROJECT_ROOT, configFile);
-  if (!fs.existsSync(configPath)) {
-    console.error(`❌ Missing Vercel config: ${configFile}`);
-    hasErrors = true;
-  } else {
-    try {
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      if (!config.routes || !Array.isArray(config.routes)) {
-        console.error(`❌ Invalid Vercel config: ${configFile} (missing routes array)`);
-        hasErrors = true;
-      } else {
-        console.log(`✅ Valid Vercel config: ${configFile}`);
-      }
-    } catch (err) {
-      console.error(`❌ Invalid Vercel config: ${configFile} (JSON parse error)`);
+// Check environment variables
+console.log('🔐 Checking environment configuration...');
+const envPath = path.join(PROJECT_ROOT, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const requiredVars = ['ABLY_API_KEY', 'NEXT_PUBLIC_SITE_URL'];
+  requiredVars.forEach(v => {
+    if (envContent.includes(v)) {
+      console.log(`  ✅ ${v} is defined`);
+    } else {
+      console.error(`  ❌ Missing: ${v}`);
       hasErrors = true;
     }
-  }
-});
-
-console.log('');
-
-// Check for common socket.io issues
-console.log('🔌 Checking socket.io implementation...');
-const socketIoRoutePath = path.join(PROJECT_ROOT, 'src/app/api/socket_io/route.ts');
-if (fs.existsSync(socketIoRoutePath)) {
-  const content = fs.readFileSync(socketIoRoutePath, 'utf8');
-  const issues = [];
-  
-  if (!content.includes('Server as ServerIO')) {
-    issues.push('Missing ServerIO import');
-  }
-  
-  if (!content.includes('path: "/api/socket_io"')) {
-    issues.push('Missing socket.io path configuration');
-  }
-  
-  if (issues.length > 0) {
-    console.error(`❌ Socket.io issues found:`);
-    issues.forEach(issue => console.error(`   - ${issue}`));
-    hasErrors = true;
-  } else {
-    console.log(`✅ Socket.io implementation looks good`);
-  }
+  });
 } else {
-  console.error(`❌ Socket.io route file not found`);
+  console.error('  ❌ .env file not found');
   hasErrors = true;
 }
 
 console.log('');
 
-// Final result
 if (hasErrors) {
-  console.error('🚨 Validation failed! Please fix the issues above.');
+  console.error('🚨 Validation failed! Fix the issues above.');
   process.exit(1);
 } else {
-  console.log('🎉 All validations passed! Routes and configurations are correct.');
+  console.log('🎉 All validations passed!');
   process.exit(0);
 }
