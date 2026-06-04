@@ -1,6 +1,6 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build --workspace=code-review",
+  "buildCommand": "cd code-review && npm run build",
   "outputDirectory": "code-review/.next",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "framework": "nextjs"
 }

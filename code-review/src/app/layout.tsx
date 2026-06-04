@@ -1,10 +1,17 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'AuthFlow - Collaboration Platform',
   description: 'Modern authentication flow with Next.js',
+};
+
+export const viewport: Viewport = {
+  width: 1280,
+  initialScale: 0.5,
+  minimumScale: 0.5,
+  userScalable: true,
 };
 
 export default function RootLayout({
