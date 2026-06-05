@@ -59,7 +59,7 @@
     "lucide-react": "^0.475.0",
     "motion": "^12.23.22",
     "nanoid": "^5.1.6",
-    "next": "^15.3.3",
+    "next": "^15.5.19",
     "nodemailer": "^7.0.9",
     "ogl": "^1.0.11",
     "patch-package": "^8.0.0",
