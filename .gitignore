@@ -2,6 +2,9 @@
 node_modules/
 .npm/
 
+# Local development copy (not for deployment)
+(LOCAL) AI powered Code review platform/
+
 # Production builds
 .next/
 .out/
