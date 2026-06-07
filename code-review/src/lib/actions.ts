@@ -1101,14 +1101,18 @@ export async function saveCode(
     }
     
     // If validation passes, proceed with the update using version checking
-    const updatedReview = await updateReviewCode(reviewId, code, authorId, currentReview.version || 1);
+    // Re-read the current version right before writing to avoid stale version issues
+    const freshReview = await dbQuery('SELECT version FROM reviews WHERE id = $1', [reviewId]);
+    const freshVersion = freshReview.rows[0]?.version || 1;
+    
+    const updatedReview = await updateReviewCode(reviewId, code, authorId, freshVersion);
     if (updatedReview) {
       // Update metrics 
       await updateReviewMetrics(reviewId, {
         timeComplexity: analysisResult.timeComplexity,
         spaceComplexity: analysisResult.spaceComplexity,
         loc
-      }, currentReview.version || 1);
+      }, freshVersion);
       
       // Log the save action
       await dbQuery(
